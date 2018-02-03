@@ -3,29 +3,32 @@ var path = require('path');
 var request = require('ajax-request');
 
 function base64(filename, data) {
-  var extname = path.extname(filename).substr(1);
-  extname = extname || 'png';
-  
-  return 'data:image/' + extname + ';base64,' + data.toString('base64');
+    var extname = path.extname(filename).substr(1);
+    extname = extname || 'png';
+    
+    if ( /svg/.test(extname) )
+        extname = "svg+xml";
+    
+    return 'data:image/' + extname + ';base64,' + data.toString('base64');
 }
 
 function img(data) {
-  var reg = /^data:image\/(\w+);base64,([\s\S]+)/;
-  var match = data.match(reg);
-  var baseType = {
-    jpeg: 'jpg'
-  };
+    var reg = /^data:image\/(\w+);base64,([\s\S]+)/;
+    var match = data.match(reg);
+    var baseType = {
+        jpeg: 'jpg'
+    };
 
-  if (!match) {
-    throw new Error('image base64 data error');
-  }
+    if (!match) {
+        throw new Error('image base64 data error');
+    }
 
-  var extname = baseType[match[1]] ? baseType[match[1]] : match[1];
+    var extname = baseType[match[1]] ? baseType[match[1]] : match[1];
 
-  return {
-    extname: '.' + extname,
-    base64: match[2]
-  };
+    return {
+        extname: '.' + extname,
+        base64: match[2]
+    };
 }
 
 /**
@@ -35,13 +38,13 @@ function img(data) {
  * base64Img.base64('path/demo.png', function(err, data) {})
  */
 exports.base64 = function(filename, callback) {
-  if (!callback) callback = util.noop;
+    if (!callback) callback = util.noop;
 
-  fs.readFile(filename, function(err, data) {
-    if (err) return callback(err);
+    fs.readFile(filename, function(err, data) {
+        if (err) return callback(err);
 
-    callback(null, base64(filename, data));
-  });
+        callback(null, base64(filename, data));
+    });
 };
 
 /**
@@ -51,9 +54,9 @@ exports.base64 = function(filename, callback) {
  * var data = base64Img.base64Sync('path/demo.png');
  */
 exports.base64Sync = function(filename) {
-  var data = fs.readFileSync(filename);
+    var data = fs.readFileSync(filename);
 
-  return base64(filename, data);
+    return base64(filename, data);
 };
 
 /**
@@ -68,15 +71,15 @@ exports.base64Sync = function(filename) {
  * );
  */
 exports.requestBase64 = function(url, callback) {
-  request({
-    url: url,
-    isBuffer: true
-  }, function (err, res, body) {
-    if (err) return callback(err);
+    request({
+        url: url,
+        isBuffer: true
+    }, function (err, res, body) {
+        if (err) return callback(err);
 
-    var data = 'data:' + res.headers['content-type'] + ';base64,' + body.toString('base64');
-    callback(err, res, data);
-  });
+        var data = 'data:' + res.headers['content-type'] + ';base64,' + body.toString('base64');
+        callback(err, res, data);
+    });
 };
 
 /**
@@ -86,12 +89,12 @@ exports.requestBase64 = function(url, callback) {
  * base64Img.img('data:image/png;base64,...', 'dest', '1', function(err, filepath) {});
  */
 exports.img = function(data, destpath, name, callback) {
-  var result = img(data);
-  var filepath = path.join(destpath, name + result.extname);
+    var result = img(data);
+    var filepath = path.join(destpath, name + result.extname);
 
-  fs.writeFile(filepath, result.base64, { encoding: 'base64' }, function(err) {
-    callback(err, filepath);
-  });
+    fs.writeFile(filepath, result.base64, { encoding: 'base64' }, function(err) {
+        callback(err, filepath);
+    });
 };
 
 /**
@@ -101,9 +104,9 @@ exports.img = function(data, destpath, name, callback) {
  * var filepath = base64Img.imgSync('data:image/png;base64,...', 'dest', '1');
  */
 exports.imgSync = function(data, destpath, name) {
-  var result = img(data);
-  var filepath = path.join(destpath, name + result.extname);
+    var result = img(data);
+    var filepath = path.join(destpath, name + result.extname);
 
-  fs.writeFileSync(filepath, result.base64, { encoding: 'base64' });
-  return filepath;
+    fs.writeFileSync(filepath, result.base64, { encoding: 'base64' });
+    return filepath;
 };
